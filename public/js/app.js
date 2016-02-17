@@ -11,7 +11,7 @@ socket.on('message', function (message){
 	console.log(message.text);
 	console.log(momentTimeStamp.format('h:mm a'));
 
-	jQuery('.messages').append('<p> <strong>' + momentTimeStamp.format('h:mm a')+ ': </strong>' + message.text + '</p>');
+	jQuery('.messages').append('<p> <strong>' + momentTimeStamp.local().format('h:mm a')+ ': </strong>' + message.text + '</p>');
 });
 
 
