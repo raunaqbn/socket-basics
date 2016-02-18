@@ -10,6 +10,20 @@ var clientInfo = {};  // This is used to keep track of all the sockets wrt the r
 
 io.on('connection', function (socket){
 	console.log('User connected via socket.io');
+
+	socket.on('disconnect', function (){
+		var clientData = clientInfo[socket.id];
+		if (typeof clientData !== 'undefined'){
+			socket.leave(clientData.room);
+			io.to(clientData.room).emit('message',{
+				name: 'System',
+				text : clientData.name + ' has left the room'
+			});
+			delete clientInfo[socket.id];
+		}
+	});
+
+
 	socket.on('joinRoom', function (req){
 		clientInfo[socket.id] = req;
 		socket.join(req.room);
@@ -19,6 +33,8 @@ io.on('connection', function (socket){
 			timestamp: moment().valueOf()
 		});
 	});
+
+
 	socket.on('message', function (message){
 		console.log('Message received: ' + message.text);
 		message.timestamp = moment().valueOf();
