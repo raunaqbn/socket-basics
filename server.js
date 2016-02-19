@@ -11,6 +11,30 @@ var clientInfo = {};  // This is used to keep track of all the sockets wrt the r
 io.on('connection', function (socket){
 	console.log('User connected via socket.io');
 
+	function sendCurrentUsers (socket){
+		var info = clientInfo[socket.id];
+		var users = [];
+
+		if (typeof info === undefined){
+			return;
+		}
+
+		Object.keys(clientInfo).forEach(function (socketId){
+			var userInfo = clientInfo[socketId];
+
+			if (userInfo.room === info.room){
+				users.push(userInfo.name);
+			}
+		});
+
+		socket.emit('message',{
+			name: 'System',
+			text: 'Users in the group :' + users.join(', '),
+			timestamp: moment().valueOf()
+		});
+	}
+
+
 	socket.on('disconnect', function (){
 		var clientData = clientInfo[socket.id];
 		if (typeof clientData !== 'undefined'){
@@ -29,16 +53,21 @@ io.on('connection', function (socket){
 		socket.join(req.room);
 		socket.broadcast.to(req.room).emit('message',{
 			name: 'System',
-			text: req.name +'has joined the room',
+			text: req.name +' has joined the room',
 			timestamp: moment().valueOf()
 		});
 	});
 
 
 	socket.on('message', function (message){
-		console.log('Message received: ' + message.text);
-		message.timestamp = moment().valueOf();
-		io.to(clientInfo[socket.id].room).emit('message',message);
+
+		if (message.text === '@currentUsers'){
+			sendCurrentUsers(socket);
+		} else{
+			console.log('Message received: ' + message.text);
+			message.timestamp = moment().valueOf();
+			io.to(clientInfo[socket.id].room).emit('message',message);
+		}
 	});
 
 	socket.emit('message',{
